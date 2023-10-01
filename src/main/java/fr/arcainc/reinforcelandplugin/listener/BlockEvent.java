@@ -2,6 +2,7 @@ package fr.arcainc.reinforcelandplugin.listener;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
 import fr.arcainc.reinforcelandplugin.config.ConfigManager;
+import fr.arcainc.reinforcelandplugin.database.SharePermission;
 import fr.arcainc.reinforcelandplugin.utils.ArmorStandUtil;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -114,8 +115,16 @@ public class BlockEvent implements Listener {
                     event.setCancelled(true);
                 }
             } else {
+                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+
                 // If reinforced and owned by the player, add more health to the block
-                if (plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ()).equalsIgnoreCase(String.valueOf(player.getUniqueId()))) {
+                if (owner.equalsIgnoreCase(String.valueOf(player.getUniqueId()))) {
+                    if (consumeItem(player, heldItem, 1)) {
+                        plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
+                        player.sendMessage("The block has gained " + healthToAdd + " health points.");
+                        event.setCancelled(true);
+                    }
+                }else if(plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_ADD_HEALTH)) { // Player has permission to add health
                     if (consumeItem(player, heldItem, 1)) {
                         plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
                         player.sendMessage("The block has gained " + healthToAdd + " health points.");

@@ -5,6 +5,7 @@ import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,6 +19,10 @@ public class ConfigManager {
      * @param plugin The ReinforceLandPlugin instance.
      */
     public static void loadConfig(ReinforceLandPlugin plugin) {
+        File folder = plugin.getDataFolder();
+        // magma may not generate folder for some reason.
+        if(!folder.exists()) folder.mkdirs();
+
         plugin.saveDefaultConfig();
         healthItems = loadCustomHealthValues(plugin);
     }

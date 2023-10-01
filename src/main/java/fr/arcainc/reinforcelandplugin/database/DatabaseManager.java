@@ -57,14 +57,12 @@ public class DatabaseManager {
             // Create the table for sharing relationships
             String createRelationTableSQL = "CREATE TABLE IF NOT EXISTS share_relations (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                    "player_id INT NOT NULL," +
-                    "target_player_id INT NOT NULL," +
+                    "player_id VARCHAR(255) NOT NULL," +
+                    "target_player_id VARCHAR(255) NOT NULL," +
                     "share_storage BOOLEAN NOT NULL DEFAULT 0," +
                     "share_beak_bypass BOOLEAN NOT NULL DEFAULT 0," +
                     "share_add_health BOOLEAN NOT NULL DEFAULT 0," +
-                    "share_use BOOLEAN NOT NULL DEFAULT 0," +
-                    "FOREIGN KEY (player_id) REFERENCES players(id)," +
-                    "FOREIGN KEY (target_player_id) REFERENCES players(id)" +
+                    "share_use BOOLEAN NOT NULL DEFAULT 0" +
                     ");";
 
             try (PreparedStatement preparedStatement = connection.prepareStatement(createTableSQL)) {
@@ -102,29 +100,6 @@ public class DatabaseManager {
             e.printStackTrace();
         }
         return false;
-    }
-
-    /**
-     * Inserts a new reinforced block entry into the database.
-     *
-     * @param x      The x-coordinate of the block.
-     * @param y      The y-coordinate of the block.
-     * @param z      The z-coordinate of the block.
-     * @param health The health of the reinforced block.
-     */
-    public void insertReinforcedBlock(int x, int y, int z, int health) {
-        try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO reinforced_blocks (x, y, z, health) VALUES (?, ?, ?, ?)")) {
-
-            statement.setInt(1, x);
-            statement.setInt(2, y);
-            statement.setInt(3, z);
-            statement.setInt(4, health);
-
-            statement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -304,12 +279,12 @@ public class DatabaseManager {
      * @param shareAddHealth True to allow health addition sharing, false otherwise.
      * @param shareUse       True to allow usage like door, trapdoor sharing, false otherwise.
      */
-    public void setShareRelations(int playerId, int targetPlayerId, boolean shareStorage, boolean shareBeakBypass, boolean shareAddHealth, boolean shareUse) {
+    public void setShareRelations(String playerId, String targetPlayerId, boolean shareStorage, boolean shareBeakBypass, boolean shareAddHealth, boolean shareUse) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
              PreparedStatement statement = connection.prepareStatement("INSERT INTO share_relations (player_id, target_player_id, share_storage, share_beak_bypass, share_add_health, share_use) VALUES (?, ?, ?, ?, ?, ?)")) {
 
-            statement.setInt(1, playerId);
-            statement.setInt(2, targetPlayerId);
+            statement.setString(1, playerId);
+            statement.setString(2, targetPlayerId);
             statement.setBoolean(3, shareStorage);
             statement.setBoolean(4, shareBeakBypass);
             statement.setBoolean(5, shareAddHealth);
@@ -327,12 +302,12 @@ public class DatabaseManager {
      * @param playerId       The ID of the player initiating the removal of sharing relationships.
      * @param targetPlayerId The ID of the target player with whom sharing relationships are removed.
      */
-    public void removeShareRelations(int playerId, int targetPlayerId) {
+    public void removeShareRelations(String playerId, String targetPlayerId) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
              PreparedStatement statement = connection.prepareStatement("DELETE FROM share_relations WHERE player_id=? AND target_player_id=?")) {
 
-            statement.setInt(1, playerId);
-            statement.setInt(2, targetPlayerId);
+            statement.setString(1, playerId);
+            statement.setString(2, targetPlayerId);
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -348,12 +323,12 @@ public class DatabaseManager {
      * @param permission     The share permission to check.
      * @return true if the sharing relationship is found and the permission is granted, false otherwise or in case of an error.
      */
-    public boolean hasSharePermission(int playerId, int targetPlayerId, SharePermission permission) {
+    public boolean hasSharePermission(String playerId, String targetPlayerId, SharePermission permission) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
              PreparedStatement statement = connection.prepareStatement("SELECT " + permission.getPermissionName() + " FROM share_relations WHERE player_id=? AND target_player_id=?")) {
 
-            statement.setInt(1, playerId);
-            statement.setInt(2, targetPlayerId);
+            statement.setString(1, playerId);
+            statement.setString(2, targetPlayerId);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {

@@ -13,6 +13,11 @@ messages:
   added: "&aYou have been added to reinforce mode."
   prefix: "&7[&e&lReinforce&7]"
   in_modes: "&aYou are in Reinforcement mode."
+  in_hand: "&cItem In Hand can add %health_to_add% Health points."
+  max_health_reached: "&cSorry you cannot performed that maximum health reached (max: %max_health%)"
 
-explosion:
-  damage: 1
+config:
+  explosion:
+    damage: 1
+  max_health: 1000
+

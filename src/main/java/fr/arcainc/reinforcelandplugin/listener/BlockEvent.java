@@ -90,6 +90,7 @@ public class BlockEvent implements Listener {
 
         if(!plugin.isInReinforceMode(player))
             return;
+        else event.setCancelled(true);
 
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
@@ -116,9 +117,16 @@ public class BlockEvent implements Listener {
                 }
             } else {
                 String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+                int health = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
 
                 // If reinforced and owned by the player, add more health to the block
                 if (owner.equalsIgnoreCase(String.valueOf(player.getUniqueId()))) {
+                    if((healthToAdd + health) > plugin.getConfig().getInt("config.max_health")) {
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix")) + " " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.max_health_reached")).replaceAll("%max_health%", String.valueOf(plugin.getConfig().getInt("config.max_health"))));
+                        event.setCancelled(true);
+                        return;
+                    }
+
                     if (consumeItem(player, heldItem, 1)) {
                         plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
                         player.sendMessage("The block has gained " + healthToAdd + " health points.");
@@ -159,7 +167,7 @@ public class BlockEvent implements Listener {
         for (Block block : event.blockList()) {
             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
-                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("explosion.damage"));
+                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("config.explosion.damage"));
                     blocksToRemove.add(block);
                 } else {
                     plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
@@ -183,7 +191,7 @@ public class BlockEvent implements Listener {
         for (Block block : event.blockList()) {
             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
-                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("explosion.damage"));
+                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("config.explosion.damage"));
                     blocksToRemove.add(block);
                 } else {
                     plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
@@ -204,7 +212,14 @@ public class BlockEvent implements Listener {
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if(plugin.isInReinforceMode(player)) {
-                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
+
+                        Material heldItem = player.getInventory().getItemInMainHand().getType();
+
+                        if (ConfigManager.getHealthItems().containsKey(heldItem)) {
+                            int healthToAdd = ConfigManager.getHealthItems().get(heldItem);
+                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd)))));
+                        }else player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
+
                         if (!player.getTargetBlock(null, 5).isEmpty()) {
                             if(player.getTargetBlock(null, 5).isLiquid()) return;
                             Block block = player.getTargetBlock(null, 5);

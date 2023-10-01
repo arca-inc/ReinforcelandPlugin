@@ -1,0 +1,18 @@
+# Configuration
+reinforce:
+  DIAMOND: 100
+
+  GOLD_INGOT: 50
+  IRON_INGOT: 30
+  COBBLESTONE: 10
+  # add ID: HEALTH
+
+messages:
+  block_health: "&aBlock Health : &r%health%"
+  removed: "&cYou have been removed from reinforce mode."
+  added: "&aYou have been added to reinforce mode."
+  prefix: "&7[&e&lReinforce&7]"
+  in_modes: "&aYou are in Reinforcement mode."
+
+explosion:
+  damage: 1

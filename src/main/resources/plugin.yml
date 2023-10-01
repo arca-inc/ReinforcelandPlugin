@@ -1,0 +1,6 @@
+name: ReinforceLandPlugin
+version: '${project.version}'
+main: fr.arcainc.reinforcelandplugin.ReinforceLandPlugin
+author: Warmadon
+commands:
+  reinforce:

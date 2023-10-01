@@ -3,16 +3,22 @@ package fr.arcainc.reinforcelandplugin;
 import fr.arcainc.reinforcelandplugin.commands.ReinforceCommand;
 import fr.arcainc.reinforcelandplugin.config.ConfigManager;
 import fr.arcainc.reinforcelandplugin.database.DatabaseManager;
+import fr.arcainc.reinforcelandplugin.gui.Gui;
+import fr.arcainc.reinforcelandplugin.gui.GuiType;
+import fr.arcainc.reinforcelandplugin.gui.TrustGui;
 import fr.arcainc.reinforcelandplugin.listener.BlockEvent;
 import fr.arcainc.reinforcelandplugin.utils.ArmorStandUtil;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class ReinforceLandPlugin extends JavaPlugin {
     public List<Player> playersInReinforceMode; // A list for players in reinforce mode
+    public Map<GuiType, Gui> guiMap = new HashMap<>();
     public DatabaseManager database;
 
     BlockEvent event;
@@ -31,6 +37,9 @@ public final class ReinforceLandPlugin extends JavaPlugin {
 
         // Register the /reinforce command
         getCommand("reinforce").setExecutor(new ReinforceCommand(this));
+
+        TrustGui trustGui = new TrustGui();
+        guiMap.put(GuiType.TRUST_GUI, trustGui);
 
         getLogger().info("ReinforceLandPlugin is enabled.");
     }

@@ -38,6 +38,11 @@ public class BlockEvent implements Listener {
         startUpdateTask();
     }
 
+    /**
+     * Handles the event when a player breaks a reinforced block.
+     *
+     * @param event The BlockBreakEvent.
+     */
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Block breaked = event.getBlock();
@@ -46,12 +51,17 @@ public class BlockEvent implements Listener {
             if(plugin.database.getHealthForBlock(breaked.getX(), breaked.getY(), breaked.getZ()) > 1) {
                 plugin.database.subtractHealthFromReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ(), 1);
                 event.setCancelled(true);
-            }else {
+            } else {
                 plugin.database.removeReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ());
             }
         }
     }
 
+    /**
+     * Handles the event when a player punches a reinforced block.
+     *
+     * @param event The PlayerInteractEvent.
+     */
     @EventHandler
     public void onBlockPunch(PlayerInteractEvent event) {
         if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
@@ -60,13 +70,19 @@ public class BlockEvent implements Listener {
                 if(plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
                     int heal = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
 
-                    ArmorStandUtil.sendActionBar(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal))), block, plugin);
+                    ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal))), block, plugin);
                 }
-            }}
+            }
+        }
     }
 
     List<Player> playerList = new ArrayList<>();
 
+    /**
+     * Handles the event when a player right-clicks a block in reinforce mode.
+     *
+     * @param event The PlayerInteractEvent.
+     */
     @EventHandler
     public void onBlockRightClick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
@@ -78,19 +94,12 @@ public class BlockEvent implements Listener {
             return;
         }
 
-
-
         Block block = event.getClickedBlock();
-
         Material heldItem = player.getInventory().getItemInMainHand().getType();
 
         if (ConfigManager.getHealthItems().containsKey(heldItem)) {
-
             if(playerList.contains(player)) return;
-
             playerList.add(player);
-
-
             Bukkit.getScheduler().runTaskLater(plugin, () -> playerList.remove(player), 5);
 
             int healthToAdd = ConfigManager.getHealthItems().get(heldItem);
@@ -98,27 +107,30 @@ public class BlockEvent implements Listener {
             // Check if the block is already reinforced
             if (!plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                 // If not reinforced, insert it into the database
-
                 // Send a message to the player
                 if(consumeItem(player, heldItem, 1)) {
-                    plugin.database.insertReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
+                    plugin.database.insertReinforcedBlockOwned(block.getX(), block.getY(), block.getZ(), healthToAdd, player);
                     player.sendMessage("The block has been reinforced with "+healthToAdd+" health points.");
                     event.setCancelled(true);
                 }
-
             } else {
-                // If reinforced, add more health to the block
-                if(consumeItem(player, heldItem, 1)) {
-                    plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
-                    player.sendMessage("The block has gained "+healthToAdd+" health points.");
-                    event.setCancelled(true);
+                // If reinforced and owned by the player, add more health to the block
+                if (plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ()).equalsIgnoreCase(String.valueOf(player.getUniqueId()))) {
+                    if (consumeItem(player, heldItem, 1)) {
+                        plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
+                        player.sendMessage("The block has gained " + healthToAdd + " health points.");
+                        event.setCancelled(true);
+                    }
                 }
-                // Send a message to the player
-
             }
         }
     }
 
+    /**
+     * Handles the event when a player places a block in reinforce mode.
+     *
+     * @param event The BlockPlaceEvent.
+     */
     @EventHandler
     public void blockPlaced(BlockPlaceEvent event) {
         if(plugin.playersInReinforceMode.contains(event.getPlayer())) {
@@ -126,12 +138,16 @@ public class BlockEvent implements Listener {
         }
     }
 
+    /**
+     * Handles the event when a block explodes to not explode reinforced blocks.
+     *
+     * @param event The BlockExplodeEvent.
+     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onExplode(BlockExplodeEvent event) {
         List<Block> blocksToRemove = new ArrayList<>();
 
         for (Block block : event.blockList()) {
-            System.out.println(block);
             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
                     plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("explosion.damage"));
@@ -143,11 +159,14 @@ public class BlockEvent implements Listener {
             }
         }
 
-        System.out.println(blocksToRemove);
-
         event.blockList().removeAll(blocksToRemove);
     }
 
+    /**
+     * Handles the event when an entity explodes to not explode reinforced blocks.
+     *
+     * @param event The EntityExplodeEvent.
+     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onEntityExplode(EntityExplodeEvent event) {
         List<Block> blocksToRemove = new ArrayList<>();
@@ -164,11 +183,12 @@ public class BlockEvent implements Listener {
             }
         }
 
-        System.out.println(blocksToRemove);
-
         event.blockList().removeAll(blocksToRemove);
     }
 
+    /**
+     * Starts the task to update player's action bar to view if he's in reinforce mode and display ArmorStand with block health information.
+     */
     public void startUpdateTask() {
         updateTask = new BukkitRunnable() {
             @Override
@@ -177,25 +197,24 @@ public class BlockEvent implements Listener {
                     if(plugin.isInReinforceMode(player)) {
                         player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
                         if (!player.getTargetBlock(null, 5).isEmpty()) {
-
                             if(player.getTargetBlock(null, 5).isLiquid()) return;
-
                             Block block = player.getTargetBlock(null, 5);
                             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                                 int currentHealth = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
-                                ArmorStandUtil.sendActionBar(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth)))), block, plugin);
-
+                                ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth)))), block, plugin);
                             } else {
-                                ArmorStandUtil.sendActionBar(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1)))), block, plugin);
+                                ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1)))), block, plugin);
                             }
-
                         }
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0, 1); // Met à jour chaque tick (1 tick = 1/20e de seconde)
+        }.runTaskTimer(plugin, 0, 1); // Updates every tick (1 tick = 1/20th of a second)
     }
 
+    /**
+     * Cancels the update task to avoid error in reload.
+     */
     public void cancelUpdateTask() {
         if (updateTask != null) {
             updateTask.cancel();
@@ -203,17 +222,24 @@ public class BlockEvent implements Listener {
         }
     }
 
+    /**
+     * Consumes items from a player's inventory.
+     *
+     * @param player   The player whose inventory is being checked and modified.
+     * @param material The material of the item to be consumed.
+     * @param amount   The amount of the item to be consumed.
+     * @return true if the player had enough of the item and it was consumed, false otherwise.
+     */
     public boolean consumeItem(Player player, Material material, int amount) {
         PlayerInventory playerInventory = player.getInventory();
-
         ItemStack itemToRemove = new ItemStack(material, amount);
 
-        // Vérifiez si le joueur a suffisamment de cet item
+        // Check if the player has enough of this item
         if (playerInventory.containsAtLeast(itemToRemove, amount)) {
             playerInventory.removeItem(itemToRemove);
-            return true; // Le joueur avait suffisamment de l'item et il a été consommé
+            return true; // The player had enough of the item and it has been consumed
         } else {
-            return false; // Le joueur n'avait pas suffisamment de l'item
+            return false; // The player did not have enough of the item
         }
     }
 }

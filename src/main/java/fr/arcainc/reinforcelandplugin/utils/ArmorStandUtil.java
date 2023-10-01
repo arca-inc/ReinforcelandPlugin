@@ -17,7 +17,16 @@ import java.util.Objects;
 public class ArmorStandUtil {
 
     public static List<ArmorStand> armorStands = new ArrayList<>();
-    public static void sendActionBar(Player player, String message, Block block, ReinforceLandPlugin plugin) {
+
+    /**
+     * Sends an ArmorStand hologram message to a player above a specified block.
+     *
+     * @param player  The player to whom the hologram will be displayed.
+     * @param message The message to display in the hologram.
+     * @param block   The block above which the hologram will be displayed.
+     * @param plugin  The ReinforceLandPlugin instance.
+     */
+    public static void sendArmorStandHologram(Player player, String message, Block block, ReinforceLandPlugin plugin) {
         Location blockLocation = block.getLocation();
         ArmorStand armorStand = getArmorStandAtLocation(blockLocation);
 
@@ -83,6 +92,12 @@ public class ArmorStandUtil {
         }, 20 * 4);
     }
 
+    /**
+     * Retrieves the ArmorStand at a specified location.
+     *
+     * @param location The location to check for an ArmorStand.
+     * @return The ArmorStand entity if found, or null if none is found.
+     */
     private static ArmorStand getArmorStandAtLocation(Location location) {
         for (Entity entity : location.getWorld().getEntities()) {
             if (entity instanceof ArmorStand && entity.getLocation().distance(location) < 1.5) {
@@ -92,6 +107,12 @@ public class ArmorStandUtil {
         return null;
     }
 
+    /**
+     * Checks if there is an ArmorStand at a specified location.
+     *
+     * @param location The location to check for an ArmorStand.
+     * @return true if an ArmorStand is found, false otherwise.
+     */
     private static boolean isArmorStandAtLocation(Location location) {
         for (Entity entity : location.getWorld().getEntities()) {
             if (entity instanceof ArmorStand && entity.getLocation().distance(location) < 1.5) {
@@ -101,6 +122,12 @@ public class ArmorStandUtil {
         return false;
     }
 
+    /**
+     * Determines the BlockFace corresponding to a given direction vector.
+     *
+     * @param direction The direction vector to analyze.
+     * @return The BlockFace representing the direction vector.
+     */
     private static BlockFace getBlockFace(Vector direction) {
         double x = direction.getX();
         double y = direction.getY();

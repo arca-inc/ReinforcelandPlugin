@@ -15,12 +15,26 @@ public class ReinforceCommand implements CommandExecutor {
 
     private String prefix;
 
+    /**
+     * Constructor for the ReinforceCommand class.
+     *
+     * @param plugin The ReinforceLandPlugin instance.
+     */
     public ReinforceCommand(ReinforceLandPlugin plugin) {
         this.plugin = plugin;
         prefix = ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix")) + " " + ChatColor.RESET;
         this.plugin.playersInReinforceMode = new ArrayList<>(); // Initialize the list
     }
 
+    /**
+     * Executes the /reinforce command to toggle reinforce mode for a player.
+     *
+     * @param sender  The command sender.
+     * @param command The command.
+     * @param label   The command label.
+     * @param args    The command arguments.
+     * @return True if the command was successfully executed.
+     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player)) {
@@ -38,11 +52,9 @@ public class ReinforceCommand implements CommandExecutor {
         } else {
             // The player is not in reinforce mode, add them to it
             this.plugin.playersInReinforceMode.add(player);
-            player.sendMessage(prefix +ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.added")));
+            player.sendMessage(prefix + ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.added")));
         }
 
         return true;
     }
-
-
 }

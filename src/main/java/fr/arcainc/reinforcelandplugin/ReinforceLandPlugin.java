@@ -43,7 +43,12 @@ public final class ReinforceLandPlugin extends JavaPlugin {
         getLogger().info("ReinforceLandPlugin is disabled.");
     }
 
-    // Add methods to check if a player is in reinforce mode
+    /**
+     * Checks if a player is in reinforce mode.
+     *
+     * @param player The player to check.
+     * @return True if the player is in reinforce mode; otherwise, false.
+     */
     public boolean isInReinforceMode(Player player) {
         return this.playersInReinforceMode.contains(player);
     }

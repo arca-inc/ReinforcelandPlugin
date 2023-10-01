@@ -4,13 +4,15 @@ ReinforceLandPlugin is a Minecraft plugin developed for the **Reunification** mo
 
 ## Features
 
-This plugin offers the following features:
+ReinforceLandPlugin offers the following features:
 
-1. Reinforcing Blocks: Players can reinforce certain blocks with health points, making them harder to break.
+1. **Reinforcing Blocks:** Players can reinforce certain blocks with health points, making them harder to break.
 
-2. Block Health Display: When a player punch at a reinforced block (only look need in reinforce mode), they can see its remaining health points as a holographic message.
+2. **Block Health Display:** When a player punches a reinforced block (only available in reinforce mode), they can see its remaining health points as a holographic message.
 
-3. Block Ownership: Reinforced blocks can be owned by players, and only the owner can add more health to them.
+3. **Block Ownership:** Reinforced blocks can be owned by players, and only the owner or trusted players can add more health to them.
+
+**Note:** Trusted players also have the ability to add health to reinforced blocks if permitted.
 
 ## Installation
 
@@ -43,6 +45,13 @@ You can customize the plugin's behavior by editing the `config.yml` file located
 ReinforceLandPlugin introduces the following command:
 
 - `/reinforce`: Toggles reinforce mode for the player. While in this mode, players can reinforce blocks and see block health. Use the command again to disable this mode.
+- `/reinforce trust <username>`: Trust a player. This command allows you to give another player permission to reinforce blocks on your land.
+- `/reinforce trustlist`: View your trusted players. Use this command to see a list of players you've granted trust permissions to.
+- `/reinforce untrust <username>`: Untrust a player. This command revokes a player's permission to reinforce blocks on your land.
+- `/reinforce help`: Display the help message. This command shows a list of available commands and their descriptions.
+- `/reinforce config`: Open GUI to control all configurations. This command opens a graphical user interface to configure plugin settings.
+
+**Note**: Replace `<username>` with the actual username of the player you want to trust or untrust.
 
 ## Usage
 

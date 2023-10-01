@@ -62,8 +62,6 @@ public class BlockEvent implements Listener {
 
                     ArmorStandUtil.sendActionBar(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal))), block, plugin);
                 }
-            }else {
-                ArmorStandUtil.sendActionBar(event.getPlayer(), ChatColor.translateAlternateColorCodes('&',plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1))), block, plugin);
             }}
     }
 

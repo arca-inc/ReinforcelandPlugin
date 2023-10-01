@@ -15,6 +15,7 @@ messages:
   in_modes: "&aYou are in Reinforcement mode."
   in_hand: "&cItem In Hand can add %health_to_add% Health points."
   max_health_reached: "&cSorry you cannot performed that maximum health reached (max: %max_health%)"
+  block_reinforce: "&aThe block has been reinforced with %health_to_add% health points."
 
 config:
   explosion:

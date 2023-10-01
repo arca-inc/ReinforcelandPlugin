@@ -70,7 +70,6 @@ public class ArmorStandUtil {
                     break;
             }
 
-            // Set the ArmorStand's new location
             Location finalLocation = toModify.clone().add(offsetX, offsetY, offsetZ);
             armorStand = block.getWorld().spawn(finalLocation, ArmorStand.class);
             armorStand.setVisible(false);
@@ -79,7 +78,6 @@ public class ArmorStandUtil {
             armorStand.setCustomNameVisible(true);
             armorStand.setMarker(true);
             armorStands.add(armorStand);
-
         }
 
 

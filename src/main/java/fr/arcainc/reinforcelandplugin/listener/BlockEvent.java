@@ -48,8 +48,8 @@ public class BlockEvent implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Block breaked = event.getBlock();
 
-        if(plugin.database.isBlockReinforced(breaked.getX(), breaked.getY(), breaked.getZ())) {
-            if(plugin.database.getHealthForBlock(breaked.getX(), breaked.getY(), breaked.getZ()) > 1) {
+        if (plugin.database.isBlockReinforced(breaked.getX(), breaked.getY(), breaked.getZ())) {
+            if (plugin.database.getHealthForBlock(breaked.getX(), breaked.getY(), breaked.getZ()) > 1) {
                 plugin.database.subtractHealthFromReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ(), 1);
                 event.setCancelled(true);
             } else {
@@ -65,13 +65,13 @@ public class BlockEvent implements Listener {
      */
     @EventHandler
     public void onBlockPunch(PlayerInteractEvent event) {
-        if(event.getAction() == Action.LEFT_CLICK_BLOCK) {
+        if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
             Block block = event.getClickedBlock();
-            if(plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
-                if(plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
+            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+                if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
                     int heal = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
 
-                    ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal))), block, plugin);
+                    ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal-1))), block, plugin);
                 }
             }
         }
@@ -88,7 +88,7 @@ public class BlockEvent implements Listener {
     public void onBlockRightClick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 
-        if(!plugin.isInReinforceMode(player))
+        if (!plugin.isInReinforceMode(player))
             return;
         else event.setCancelled(true);
 
@@ -100,7 +100,7 @@ public class BlockEvent implements Listener {
         Material heldItem = player.getInventory().getItemInMainHand().getType();
 
         if (ConfigManager.getHealthItems().containsKey(heldItem)) {
-            if(playerList.contains(player)) return;
+            if (playerList.contains(player)) return;
             playerList.add(player);
             Bukkit.getScheduler().runTaskLater(plugin, () -> playerList.remove(player), 5);
 
@@ -110,9 +110,9 @@ public class BlockEvent implements Listener {
             if (!plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                 // If not reinforced, insert it into the database
                 // Send a message to the player
-                if(consumeItem(player, heldItem, 1)) {
+                if (consumeItem(player, heldItem, 1)) {
                     plugin.database.insertReinforcedBlockOwned(block.getX(), block.getY(), block.getZ(), healthToAdd, player);
-                    player.sendMessage("The block has been reinforced with "+healthToAdd+" health points.");
+                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));
                     event.setCancelled(true);
                 }
             } else {
@@ -121,7 +121,7 @@ public class BlockEvent implements Listener {
 
                 // If reinforced and owned by the player, add more health to the block
                 if (owner.equalsIgnoreCase(String.valueOf(player.getUniqueId()))) {
-                    if((healthToAdd + health) > plugin.getConfig().getInt("config.max_health")) {
+                    if ((healthToAdd + health) > plugin.getConfig().getInt("config.max_health")) {
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix")) + " " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.max_health_reached")).replaceAll("%max_health%", String.valueOf(plugin.getConfig().getInt("config.max_health"))));
                         event.setCancelled(true);
                         return;
@@ -129,13 +129,13 @@ public class BlockEvent implements Listener {
 
                     if (consumeItem(player, heldItem, 1)) {
                         plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
-                        player.sendMessage("The block has gained " + healthToAdd + " health points.");
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));
                         event.setCancelled(true);
                     }
-                }else if(plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_ADD_HEALTH)) { // Player has permission to add health
+                } else if (plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_ADD_HEALTH)) { // Player has permission to add health
                     if (consumeItem(player, heldItem, 1)) {
                         plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
-                        player.sendMessage("The block has gained " + healthToAdd + " health points.");
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));
                         event.setCancelled(true);
                     }
                 }
@@ -150,7 +150,7 @@ public class BlockEvent implements Listener {
      */
     @EventHandler
     public void blockPlaced(BlockPlaceEvent event) {
-        if(plugin.playersInReinforceMode.contains(event.getPlayer())) {
+        if (plugin.playersInReinforceMode.contains(event.getPlayer())) {
             event.setCancelled(true);
         }
     }
@@ -211,17 +211,18 @@ public class BlockEvent implements Listener {
             @Override
             public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) {
-                    if(plugin.isInReinforceMode(player)) {
+                    if (plugin.isInReinforceMode(player)) {
 
                         Material heldItem = player.getInventory().getItemInMainHand().getType();
 
                         if (ConfigManager.getHealthItems().containsKey(heldItem)) {
                             int healthToAdd = ConfigManager.getHealthItems().get(heldItem);
                             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd)))));
-                        }else player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
+                        } else
+                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
 
                         if (!player.getTargetBlock(null, 5).isEmpty()) {
-                            if(player.getTargetBlock(null, 5).isLiquid()) return;
+                            if (player.getTargetBlock(null, 5).isLiquid()) return;
                             Block block = player.getTargetBlock(null, 5);
                             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
                                 int currentHealth = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
@@ -233,7 +234,7 @@ public class BlockEvent implements Listener {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0, 10); // Updates every 10 ticks (1 tick = 1/20th of a second)
+        }.runTaskTimer(plugin, 0, 20); // Updates every 20 ticks (1 tick = 1/20th of a second)
     }
 
     /**

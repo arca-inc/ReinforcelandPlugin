@@ -218,7 +218,7 @@ public class BlockEvent implements Listener {
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0, 1); // Updates every tick (1 tick = 1/20th of a second)
+        }.runTaskTimer(plugin, 0, 10); // Updates every 10 ticks (1 tick = 1/20th of a second)
     }
 
     /**

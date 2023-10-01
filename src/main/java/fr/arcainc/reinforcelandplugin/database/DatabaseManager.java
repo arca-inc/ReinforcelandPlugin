@@ -50,7 +50,7 @@ public class DatabaseManager {
                     "x INT NOT NULL," +
                     "y INT NOT NULL," +
                     "z INT NOT NULL," +
-                    "health INT NOT NULL" +
+                    "health INT NOT NULL," +
                     "owner VARCHAR(255) NOT NULL" +
                     ");";
 
@@ -113,7 +113,7 @@ public class DatabaseManager {
      */
     public void insertReinforcedBlockOwned(int x, int y, int z, int health, Player player) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO reinforced_blocks (x, y, z, health, player) VALUES (?, ?, ?, ?, ?)")) {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO reinforced_blocks (x, y, z, health, owner) VALUES (?, ?, ?, ?, ?)")) {
 
             statement.setInt(1, x);
             statement.setInt(2, y);

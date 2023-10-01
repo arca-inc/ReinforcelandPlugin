@@ -34,6 +34,10 @@ You can customize the plugin's behavior by editing the `config.yml` file located
 
 - **Messages**: Customize messages sent to players when they reinforce blocks or interact with them.
 
+- **Explosion Damage** : You can specify custom damage amounts per explosion.
+
+- **Max Health** : You can specify the maximum health of reinforce blocks.
+
 ## Commands
 
 ReinforceLandPlugin introduces the following command:

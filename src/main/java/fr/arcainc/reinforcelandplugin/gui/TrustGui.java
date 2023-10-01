@@ -14,7 +14,6 @@ public class TrustGui extends Gui {
     @Override
     public void initialize() {
         // Initialisation de l'inventaire
-        // Par exemple, ajoutez des éléments à l'inventaire ici
         CustomColor greenColor = CustomColor.LIME; // Vert
         ItemStack trustAllPermissions = ItemStackUtils.createColoredGlassPane(greenColor);
         trustAllPermissions.setItemMeta(ItemStackUtils.createItemMetaData(trustAllPermissions, "&aTrust all", 1, true));

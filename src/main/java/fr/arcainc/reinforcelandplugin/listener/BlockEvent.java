@@ -68,10 +68,24 @@ public class BlockEvent implements Listener {
         if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
             Block block = event.getClickedBlock();
             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+                Player player = event.getPlayer();
+                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+                if (player.isSneaking()) {
+                    if (String.valueOf(player.getUniqueId()).equals(owner)) {
+                        plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
+                        if (player.getItemInHand() != null) {
+                            event.getClickedBlock().breakNaturally(player.getItemInHand());
+                        } else event.getClickedBlock().breakNaturally();
+                    } else if (plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_BEAK_BYPASS)) {
+                        plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
+                        if (player.getItemInHand() != null) {
+                            event.getClickedBlock().breakNaturally(player.getItemInHand());
+                        } else event.getClickedBlock().breakNaturally();
+                    }
+                }
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
                     int heal = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
-
-                    ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal-1))), block, plugin);
+                    ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal - 1))), block, plugin);
                 }
             }
         }
@@ -88,15 +102,52 @@ public class BlockEvent implements Listener {
     public void onBlockRightClick(PlayerInteractEvent event) {
         Player player = event.getPlayer();
 
-        if (!plugin.isInReinforceMode(player))
-            return;
-        else event.setCancelled(true);
 
         if (event.getAction() != Action.RIGHT_CLICK_BLOCK) {
             return;
         }
 
         Block block = event.getClickedBlock();
+
+        if (!plugin.isInReinforceMode(player)) {
+
+            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+                if (!String.valueOf(player.getUniqueId()).equals(owner)) {
+                    if (!plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_STORAGE)) {
+                        List<String> containerMaterials = plugin.getConfig().getStringList("containers");
+                        for (String material : containerMaterials) {
+                            try {
+                                Material rmaterial = Material.valueOf(material);
+                                if (rmaterial != null && block.getType() == rmaterial) {
+                                    event.setCancelled(true);
+                                    break;
+                                }
+                            } catch (IllegalArgumentException ignored) {
+                            }
+                        }
+                    }
+                    if (!plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_USE)) {
+                        List<String> usableBlockMaterials = plugin.getConfig().getStringList("usable_blocks");
+                        for (String material : usableBlockMaterials) {
+                            try {
+                                Material rmaterial = Material.valueOf(material);
+                                if (rmaterial != null && block.getType() == rmaterial) {
+                                    event.setCancelled(true);
+                                    break;
+                                }
+                            } catch (IllegalArgumentException ignored) {
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            return;
+        } else event.setCancelled(true);
+
+
         Material heldItem = player.getInventory().getItemInMainHand().getType();
 
         if (ConfigManager.getHealthItems().containsKey(heldItem)) {
@@ -133,6 +184,12 @@ public class BlockEvent implements Listener {
                         event.setCancelled(true);
                     }
                 } else if (plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_ADD_HEALTH)) { // Player has permission to add health
+                    if ((healthToAdd + health) > plugin.getConfig().getInt("config.max_health")) {
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix")) + " " + ChatColor.RESET + ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.max_health_reached")).replaceAll("%max_health%", String.valueOf(plugin.getConfig().getInt("config.max_health"))));
+                        event.setCancelled(true);
+                        return;
+                    }
+
                     if (consumeItem(player, heldItem, 1)) {
                         plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));

@@ -2,6 +2,7 @@ package fr.arcainc.reinforcelandplugin.commands;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
 import fr.arcainc.reinforcelandplugin.gui.GuiType;
+import fr.arcainc.reinforcelandplugin.gui.TrustGui;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -57,7 +58,7 @@ public class ReinforceCommand implements CommandExecutor {
                 case "trust":
                     if (args.length >= 2) {
                         String target = args[1];
-                        if(Bukkit.getPlayer(target) == null) {
+                        if(Bukkit.getPlayer(target) == null || Bukkit.getPlayer(target).equals(player)) {
                             player.sendMessage(prefix + ChatColor.RED + "Usage: /reinforce trust <username>");
                             break;
                         }
@@ -74,7 +75,7 @@ public class ReinforceCommand implements CommandExecutor {
                 case "untrust":
                     if (args.length >= 2) {
                         String target = args[1];
-                        if(Bukkit.getPlayer(target) == null) {
+                        if(Bukkit.getPlayer(target) == null || Bukkit.getPlayer(target).equals(player)) {
                             player.sendMessage(prefix + ChatColor.RED + "Usage: /reinforce untrust <username>");
                             break;
                         }
@@ -139,7 +140,7 @@ public class ReinforceCommand implements CommandExecutor {
      * @param target The player to trust.
      */
     private void trustPlayer(Player player, String target) {
-        plugin.guiMap.get(GuiType.TRUST_GUI).open(player);
+        plugin.guiMap.get(GuiType.TRUST_GUI).openWithVarString(player, target);
     }
 
     /**
@@ -148,7 +149,7 @@ public class ReinforceCommand implements CommandExecutor {
      * @param player The player executing the command.
      */
     private void viewTrustedPlayers(Player player) {
-        // TODO
+        // TODO: Display GUI Contains List of trusted players Pagination system required.
     }
 
     /**
@@ -158,6 +159,6 @@ public class ReinforceCommand implements CommandExecutor {
      * @param target The player to untrust.
      */
     private void untrustPlayer(Player player, String target) {
-        // TODO
+        ReinforceLandPlugin.getInstance().database.removeShareRelations(String.valueOf(player.getUniqueId()), String.valueOf(Bukkit.getPlayer(target).getUniqueId()));
     }
 }

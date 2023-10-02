@@ -23,10 +23,17 @@ public final class ReinforceLandPlugin extends JavaPlugin {
 
     BlockEvent event;
 
+    public static ReinforceLandPlugin getInstance() {
+        return instance;
+    }
+
+    public static ReinforceLandPlugin instance;
+
     @Override
     public void onEnable() {
         // Plugin initialization
         // Load the configuration
+        instance = this;
         ConfigManager.loadConfig(this);
 
         database = new DatabaseManager(this);

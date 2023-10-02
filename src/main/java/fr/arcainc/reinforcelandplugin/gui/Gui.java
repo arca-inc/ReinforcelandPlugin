@@ -55,6 +55,10 @@ public abstract class Gui implements Listener {
         initialize();
     }
 
+    public void openWithVarString(Player player, String var) {
+
+    }
+
     /**
      * Handles a click event in the GUI at the specified slot. This method should be overridden
      * in derived classes to define the behavior of the GUI in response to clicks.
@@ -94,6 +98,7 @@ public abstract class Gui implements Listener {
     protected void close() {
         unregisterSelfListener();
         startUpdater();
+        player.closeInventory();
     }
 
     @EventHandler

@@ -8,8 +8,10 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -22,6 +24,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.bukkit.material.Door;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 
@@ -48,12 +51,12 @@ public class BlockEvent implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Block breaked = event.getBlock();
 
-        if (plugin.database.isBlockReinforced(breaked.getX(), breaked.getY(), breaked.getZ())) {
+        if (plugin.database.isBlockReinforced(breaked.getX(), breaked.getY(), breaked.getZ(), breaked.getWorld().getName())) {
             if (plugin.database.getHealthForBlock(breaked.getX(), breaked.getY(), breaked.getZ()) > 1) {
-                plugin.database.subtractHealthFromReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ(), 1);
+                plugin.database.subtractHealthFromReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ(), 1, breaked.getWorld().getName());
                 event.setCancelled(true);
             } else {
-                plugin.database.removeReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ());
+                plugin.database.removeReinforcedBlock(breaked.getX(), breaked.getY(), breaked.getZ(), breaked.getWorld().getName());
             }
         }
     }
@@ -67,20 +70,32 @@ public class BlockEvent implements Listener {
     public void onBlockPunch(PlayerInteractEvent event) {
         if (event.getAction() == Action.LEFT_CLICK_BLOCK) {
             Block block = event.getClickedBlock();
-            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
                 Player player = event.getPlayer();
-                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                 if (player.isSneaking()) {
                     if (String.valueOf(player.getUniqueId()).equals(owner)) {
-                        plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
+                        plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                         if (player.getItemInHand() != null) {
                             event.getClickedBlock().breakNaturally(player.getItemInHand());
-                        } else event.getClickedBlock().breakNaturally();
+                            plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
+                        } else {
+                            plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
+
+                            event.getClickedBlock().breakNaturally();
+                        }
+                        breakAlsoUpperAndDownsideIfAir(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                     } else if (plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_BEAK_BYPASS)) {
-                        plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
+                        plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                         if (player.getItemInHand() != null) {
                             event.getClickedBlock().breakNaturally(player.getItemInHand());
-                        } else event.getClickedBlock().breakNaturally();
+                            plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
+                        } else {
+                            plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
+
+                            event.getClickedBlock().breakNaturally();
+                        }
+                        breakAlsoUpperAndDownsideIfAir(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                     }
                 }
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
@@ -89,6 +104,22 @@ public class BlockEvent implements Listener {
                 }
             }
         }
+    }
+
+    private void breakAlsoUpperAndDownsideIfAir(int x, int y, int z, String world_name) {
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (plugin.database.isBlockReinforced(x, y+ 1, z, world_name)) {
+                if (Bukkit.getWorld(world_name).getBlockAt(new Location(Bukkit.getWorld(world_name), x, y + 1, z)).getType().equals(Material.AIR)) {
+                    plugin.database.removeReinforcedBlock(x, y+ 1, z, world_name);
+                }
+            }
+
+            if (plugin.database.isBlockReinforced(x, y - 1, z, world_name)) {
+                if (Bukkit.getWorld(world_name).getBlockAt(new Location(Bukkit.getWorld(world_name), x, y - 1, z)).getType().equals(Material.AIR)) {
+                    plugin.database.removeReinforcedBlock(x, y - 1, z, world_name);
+                }
+            }
+        }, 10);
     }
 
     List<Player> playerList = new ArrayList<>();
@@ -111,8 +142,8 @@ public class BlockEvent implements Listener {
 
         if (!plugin.isInReinforceMode(player)) {
 
-            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
-                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
+                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                 if (!String.valueOf(player.getUniqueId()).equals(owner)) {
                     if (!plugin.database.hasSharePermission(owner, String.valueOf(player.getUniqueId()), SharePermission.SHARE_STORAGE)) {
                         List<String> containerMaterials = plugin.getConfig().getStringList("containers");
@@ -158,16 +189,16 @@ public class BlockEvent implements Listener {
             int healthToAdd = ConfigManager.getHealthItems().get(heldItem);
 
             // Check if the block is already reinforced
-            if (!plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+            if (!plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
                 // If not reinforced, insert it into the database
                 // Send a message to the player
                 if (consumeItem(player, heldItem, 1)) {
-                    plugin.database.insertReinforcedBlockOwned(block.getX(), block.getY(), block.getZ(), healthToAdd, player);
+                    plugin.database.insertReinforcedBlockOwned(block.getX(), block.getY(), block.getZ(), healthToAdd, player, block.getWorld().getName());
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));
                     event.setCancelled(true);
                 }
             } else {
-                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ());
+                String owner = plugin.database.getOwnerForBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                 int health = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
 
                 // If reinforced and owned by the player, add more health to the block
@@ -179,7 +210,7 @@ public class BlockEvent implements Listener {
                     }
 
                     if (consumeItem(player, heldItem, 1)) {
-                        plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
+                        plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd, block.getWorld().getName());
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));
                         event.setCancelled(true);
                     }
@@ -191,7 +222,7 @@ public class BlockEvent implements Listener {
                     }
 
                     if (consumeItem(player, heldItem, 1)) {
-                        plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd);
+                        plugin.database.addHealthToReinforcedBlock(block.getX(), block.getY(), block.getZ(), healthToAdd, block.getWorld().getName());
                         player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.prefix") + " " + ChatColor.RESET + plugin.getConfig().getString("messages.block_reinforce")).replaceAll("%health_to_add%", String.valueOf(healthToAdd)));
                         event.setCancelled(true);
                     }
@@ -222,12 +253,12 @@ public class BlockEvent implements Listener {
         List<Block> blocksToRemove = new ArrayList<>();
 
         for (Block block : event.blockList()) {
-            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
-                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("config.explosion.damage"));
+                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("config.explosion.damage"), block.getWorld().getName());
                     blocksToRemove.add(block);
                 } else {
-                    plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
+                    plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                     blocksToRemove.add(block);
                 }
             }
@@ -246,12 +277,12 @@ public class BlockEvent implements Listener {
         List<Block> blocksToRemove = new ArrayList<>();
 
         for (Block block : event.blockList()) {
-            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
-                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("config.explosion.damage"));
+                    plugin.database.subtractHealthFromReinforcedBlock(block.getX(), block.getY(), block.getZ(), plugin.getConfig().getInt("config.explosion.damage"), block.getWorld().getName());
                     blocksToRemove.add(block);
                 } else {
-                    plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ());
+                    plugin.database.removeReinforcedBlock(block.getX(), block.getY(), block.getZ(), block.getWorld().getName());
                     blocksToRemove.add(block);
                 }
             }
@@ -281,7 +312,7 @@ public class BlockEvent implements Listener {
                         if (!player.getTargetBlock(null, 5).isEmpty()) {
                             if (player.getTargetBlock(null, 5).isLiquid()) return;
                             Block block = player.getTargetBlock(null, 5);
-                            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ())) {
+                            if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
                                 int currentHealth = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
                                 ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth)))), block, plugin);
                             } else {

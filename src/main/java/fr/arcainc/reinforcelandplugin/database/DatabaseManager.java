@@ -5,6 +5,9 @@
 package fr.arcainc.reinforcelandplugin.database;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 
 import java.io.File;
@@ -50,9 +53,10 @@ public class DatabaseManager {
                     "x INT NOT NULL," +
                     "y INT NOT NULL," +
                     "z INT NOT NULL," +
+                    "world VARCHAR(255) NOT NULL," +
                     "health INT NOT NULL," +
                     "owner VARCHAR(255) NOT NULL" +
-                    ");";
+            ");";
 
             // Create the table for sharing relationships
             String createRelationTableSQL = "CREATE TABLE IF NOT EXISTS share_relations (" +
@@ -84,13 +88,14 @@ public class DatabaseManager {
      * @param z The z-coordinate of the block.
      * @return true if the block is reinforced, false otherwise.
      */
-    public boolean isBlockReinforced(int x, int y, int z) {
+    public boolean isBlockReinforced(int x, int y, int z, String world_name) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM reinforced_blocks WHERE x=? AND y=? AND z=?")) {
+             PreparedStatement statement = connection.prepareStatement("SELECT COUNT(*) FROM reinforced_blocks WHERE x=? AND y=? AND z=? AND world=?")) {
 
             statement.setInt(1, x);
             statement.setInt(2, y);
             statement.setInt(3, z);
+            statement.setString(4, world_name);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
@@ -111,15 +116,16 @@ public class DatabaseManager {
      * @param health The health of the reinforced block.
      * @param player The player who owns the reinforced block.
      */
-    public void insertReinforcedBlockOwned(int x, int y, int z, int health, Player player) {
+    public void insertReinforcedBlockOwned(int x, int y, int z, int health, Player player, String world_name) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("INSERT INTO reinforced_blocks (x, y, z, health, owner) VALUES (?, ?, ?, ?, ?)")) {
+             PreparedStatement statement = connection.prepareStatement("INSERT INTO reinforced_blocks (x, y, z, health, owner, world) VALUES (?, ?, ?, ?, ?, ?)")) {
 
             statement.setInt(1, x);
             statement.setInt(2, y);
             statement.setInt(3, z);
             statement.setInt(4, health);
             statement.setString(5, String.valueOf(player.getUniqueId()));
+            statement.setString(6, world_name);
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -135,14 +141,15 @@ public class DatabaseManager {
      * @param z            The z-coordinate of the block.
      * @param healthToAdd  The amount of health to add to the reinforced block.
      */
-    public void addHealthToReinforcedBlock(int x, int y, int z, int healthToAdd) {
+    public void addHealthToReinforcedBlock(int x, int y, int z, int healthToAdd, String world_name) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("UPDATE reinforced_blocks SET health = health + ? WHERE x=? AND y=? AND z=?")) {
+             PreparedStatement statement = connection.prepareStatement("UPDATE reinforced_blocks SET health = health + ? WHERE x=? AND y=? AND z=? AND world=?")) {
 
             statement.setInt(1, healthToAdd);
             statement.setInt(2, x);
             statement.setInt(3, y);
             statement.setInt(4, z);
+            statement.setString(5, world_name);
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -158,14 +165,15 @@ public class DatabaseManager {
      * @param z              The z-coordinate of the block.
      * @param healthToSubtract The amount of health to subtract from the reinforced block.
      */
-    public void subtractHealthFromReinforcedBlock(int x, int y, int z, int healthToSubtract) {
+    public void subtractHealthFromReinforcedBlock(int x, int y, int z, int healthToSubtract, String world_name) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("UPDATE reinforced_blocks SET health = health - ? WHERE x=? AND y=? AND z=?")) {
+             PreparedStatement statement = connection.prepareStatement("UPDATE reinforced_blocks SET health = health - ? WHERE x=? AND y=? AND z=? AND world=?")) {
 
             statement.setInt(1, healthToSubtract);
             statement.setInt(2, x);
             statement.setInt(3, y);
             statement.setInt(4, z);
+            statement.setString(5, world_name);
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -206,13 +214,17 @@ public class DatabaseManager {
      * @param y The y-coordinate of the block to remove.
      * @param z The z-coordinate of the block to remove.
      */
-    public void removeReinforcedBlock(int x, int y, int z) {
+    public void removeReinforcedBlock(int x, int y, int z, String world_name) {
+
+
+
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("DELETE FROM reinforced_blocks WHERE x=? AND y=? AND z=?")) {
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM reinforced_blocks WHERE x=? AND y=? AND z=? AND world=?")) {
 
             statement.setInt(1, x);
             statement.setInt(2, y);
             statement.setInt(3, z);
+            statement.setString(4, world_name);
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -228,14 +240,15 @@ public class DatabaseManager {
      * @param z     The z-coordinate of the block.
      * @param owner The UUID of the player who owns the block.
      */
-    public void setOwnerForReinforcedBlock(int x, int y, int z, String owner) {
+    public void setOwnerForReinforcedBlock(int x, int y, int z, String owner, String world_name) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("UPDATE reinforced_blocks SET owner = ? WHERE x=? AND y=? AND z=?")) {
+             PreparedStatement statement = connection.prepareStatement("UPDATE reinforced_blocks SET owner = ? WHERE x=? AND y=? AND z=? AND world=?")) {
 
             statement.setString(1, owner);
             statement.setInt(2, x);
             statement.setInt(3, y);
             statement.setInt(4, z);
+            statement.setString(5, world_name);
 
             statement.executeUpdate();
         } catch (SQLException e) {
@@ -251,13 +264,14 @@ public class DatabaseManager {
      * @param z The z-coordinate of the block.
      * @return The UUID of the player who owns the block or null if not found or in case of an error.
      */
-    public String getOwnerForBlock(int x, int y, int z) {
+    public String getOwnerForBlock(int x, int y, int z, String world_name) {
         try (Connection connection = DriverManager.getConnection(databaseURL);
-             PreparedStatement statement = connection.prepareStatement("SELECT owner FROM reinforced_blocks WHERE x=? AND y=? AND z=?")) {
+             PreparedStatement statement = connection.prepareStatement("SELECT owner FROM reinforced_blocks WHERE x=? AND y=? AND z=? AND world=?")) {
 
             statement.setInt(1, x);
             statement.setInt(2, y);
             statement.setInt(3, z);
+            statement.setString(4, world_name);
 
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {

@@ -2,7 +2,7 @@ package fr.arcainc.reinforcelandplugin.commands;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
 import fr.arcainc.reinforcelandplugin.gui.GuiType;
-import fr.arcainc.reinforcelandplugin.gui.TrustGui;
+import fr.arcainc.reinforcelandplugin.gui.TrustGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -10,7 +10,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.ChatColor;
 import java.util.ArrayList;
-import java.util.List;
 
 public class ReinforceCommand implements CommandExecutor {
 
@@ -140,7 +139,7 @@ public class ReinforceCommand implements CommandExecutor {
      * @param target The player to trust.
      */
     private void trustPlayer(Player player, String target) {
-        plugin.guiMap.get(GuiType.TRUST_GUI).openWithVarString(player, target);
+        new TrustGUI().openWithVarString(player, target);
     }
 
     /**

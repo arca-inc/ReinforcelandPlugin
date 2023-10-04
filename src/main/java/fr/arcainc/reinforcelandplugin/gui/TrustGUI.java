@@ -11,11 +11,11 @@ import org.bukkit.inventory.ItemStack;
 import java.util.HashMap;
 import java.util.Map;
 
-public class TrustGui extends Gui {
+public class TrustGUI extends GUI {
 
-    public static Map<Player, String> to_trust = new HashMap<>();
+    public Map<Player, String> to_trust = new HashMap<>();
 
-    public TrustGui() {
+    public TrustGUI() {
         super("Trust Player", 27); // 3 rangées (3x9)
     }
 
@@ -23,7 +23,7 @@ public class TrustGui extends Gui {
     @Override
     public void openWithVarString(Player player, String to_trust) {
         super.open(player);
-        TrustGui.to_trust.put(player, to_trust);
+        this.to_trust.put(player, to_trust);
     }
 
     @Override
@@ -60,12 +60,12 @@ public class TrustGui extends Gui {
         switch (slot) {
             case 11:
                 event.setCancelled(true);
-                ReinforceLandPlugin.getInstance().database.setShareRelations(String.valueOf(player.getUniqueId()), String.valueOf(Bukkit.getPlayer(TrustGui.to_trust.get(player)).getUniqueId()), true, true, true, true);
+                ReinforceLandPlugin.getInstance().database.setShareRelations(String.valueOf(player.getUniqueId()), String.valueOf(Bukkit.getPlayer(to_trust.get(player)).getUniqueId()), true, true, true, true);
                 close();
                 break;
             case 13:
                 event.setCancelled(true);
-                // TODO : SubMenu Permissions of Player
+                new AdvancedTrustGUI().openWithVarString(player, to_trust.get(player));
                 break;
             case 15:
                 event.setCancelled(true);

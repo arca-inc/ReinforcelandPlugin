@@ -8,7 +8,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 
 /**
@@ -16,7 +15,7 @@ import org.bukkit.scheduler.BukkitTask;
  * This class serves as a template for creating custom GUIs by providing essential methods
  * and properties.
  */
-public abstract class Gui implements Listener {
+public abstract class GUI implements Listener {
     /**
      * The inventory of the GUI.
      */
@@ -30,12 +29,12 @@ public abstract class Gui implements Listener {
     protected BukkitTask task;
 
     /**
-     * Creates a new instance of the Gui class.
+     * Creates a new instance of the GUI class.
      *
      * @param title  The title of the GUI window.
      * @param size   The size of the GUI, typically specified as a multiple of 9 (e.g., 9, 18, 27).
      */
-    public Gui(String title, int size) {
+    public GUI(String title, int size) {
         this.inventory = Bukkit.createInventory(null, size, title);
     }
 
@@ -53,6 +52,7 @@ public abstract class Gui implements Listener {
         player.openInventory(inventory);
         registerSelfListener();
         initialize();
+        startUpdater();
     }
 
     public void openWithVarString(Player player, String var) {
@@ -74,7 +74,10 @@ public abstract class Gui implements Listener {
     public abstract void update();
 
     public void startUpdater() {
-        task = Bukkit.getScheduler().runTaskTimer(ReinforceLandPlugin.getPlugin(ReinforceLandPlugin.class), this::update, 1, 1);
+        task = Bukkit.getScheduler().runTaskTimer(ReinforceLandPlugin.getPlugin(ReinforceLandPlugin.class), () -> {
+            this.update();
+            player.updateInventory();
+        }, 1, 1);
     }
 
     public void stopUpdater() {
@@ -97,7 +100,7 @@ public abstract class Gui implements Listener {
 
     protected void close() {
         unregisterSelfListener();
-        startUpdater();
+        stopUpdater();
         player.closeInventory();
     }
 

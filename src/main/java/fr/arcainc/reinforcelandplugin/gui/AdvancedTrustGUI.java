@@ -97,7 +97,7 @@ public class AdvancedTrustGUI extends GUI {
         useItem.setItemMeta(useMeta);
 
         ItemStack confirmItem = ItemStackUtils.createColoredGlassPane(CustomColor.GREEN);
-        ItemMeta confirmMeta = ItemStackUtils.createItemMetaData(useItem, ChatColor.GREEN + "Confirm");
+        ItemMeta confirmMeta = ItemStackUtils.createItemMetaData(confirmItem, ChatColor.GREEN + "Confirm");
 
         confirmItem.setItemMeta(confirmMeta);
 
@@ -202,6 +202,8 @@ public class AdvancedTrustGUI extends GUI {
 
         useMeta.setLore(Collections.singletonList("Allow player to use protected (redstone, door)"));
         useItem.setItemMeta(useMeta);
+
+
 
         inventory.setItem(10, storageItem);
         inventory.setItem(12, bypassItem);

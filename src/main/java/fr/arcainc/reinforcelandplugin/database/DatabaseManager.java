@@ -296,6 +296,13 @@ public class DatabaseManager {
      * @param shareUse       True to allow usage like door, trapdoor sharing, false otherwise.
      */
     public void setShareRelations(String playerId, String targetPlayerId, boolean shareStorage, boolean shareBeakBypass, boolean shareAddHealth, boolean shareUse) {
+
+        if(!shareAddHealth)
+            if (!shareBeakBypass)
+                if(!shareStorage)
+                    if(!shareUse)
+                        return;
+
         try (Connection connection = DriverManager.getConnection(databaseURL);
              PreparedStatement statement = connection.prepareStatement("INSERT INTO share_relations (player_id, target_player_id, share_storage, share_beak_bypass, share_add_health, share_use) VALUES (?, ?, ?, ?, ?, ?)")) {
 

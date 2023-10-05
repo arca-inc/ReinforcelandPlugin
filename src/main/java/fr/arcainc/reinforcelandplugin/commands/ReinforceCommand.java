@@ -2,6 +2,7 @@ package fr.arcainc.reinforcelandplugin.commands;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
 import fr.arcainc.reinforcelandplugin.gui.GuiType;
+import fr.arcainc.reinforcelandplugin.gui.PlayerListGUI;
 import fr.arcainc.reinforcelandplugin.gui.TrustGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -10,6 +11,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.ChatColor;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ReinforceCommand implements CommandExecutor {
 
@@ -70,7 +74,6 @@ public class ReinforceCommand implements CommandExecutor {
                 case "trustlist":
                     viewTrustedPlayers(player);
                     break;
-
                 case "untrust":
                     if (args.length >= 2) {
                         String target = args[1];
@@ -139,7 +142,7 @@ public class ReinforceCommand implements CommandExecutor {
      * @param target The player to trust.
      */
     private void trustPlayer(Player player, String target) {
-        new TrustGUI().openWithVarString(player, target);
+        new TrustGUI().openWithVarString(player, String.valueOf(Bukkit.getPlayer(target).getUniqueId()));
     }
 
     /**
@@ -148,7 +151,7 @@ public class ReinforceCommand implements CommandExecutor {
      * @param player The player executing the command.
      */
     private void viewTrustedPlayers(Player player) {
-        // TODO: Display GUI Contains List of trusted players Pagination system required.
+        new PlayerListGUI(plugin.database.getSharingPlayers(String.valueOf(player.getUniqueId()))).open(player);
     }
 
     /**

@@ -60,7 +60,7 @@ public class TrustGUI extends GUI {
         switch (slot) {
             case 11:
                 event.setCancelled(true);
-                ReinforceLandPlugin.getInstance().database.setShareRelations(String.valueOf(player.getUniqueId()), String.valueOf(Bukkit.getPlayer(to_trust.get(player)).getUniqueId()), true, true, true, true);
+                ReinforceLandPlugin.getInstance().database.setShareRelations(String.valueOf(player.getUniqueId()), to_trust.get(player), true, true, true, true);
                 close();
                 break;
             case 13:

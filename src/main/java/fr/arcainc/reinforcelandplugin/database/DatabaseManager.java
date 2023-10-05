@@ -17,6 +17,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseManager {
 
@@ -352,5 +354,30 @@ public class DatabaseManager {
             e.printStackTrace();
         }
         return false; // Returns false if the sharing relationship is not found or in case of an error.
+    }
+
+    /**
+     * Retrieves a list of players in a sharing relationship with the specified player.
+     *
+     * @param playerId The ID of the player for whom sharing relationships are queried.
+     * @return A list of player IDs in a sharing relationship with the specified player.
+     */
+    public List<String> getSharingPlayers(String playerId) {
+        List<String> sharingPlayers = new ArrayList<>();
+
+        try (Connection connection = DriverManager.getConnection(databaseURL);
+             PreparedStatement statement = connection.prepareStatement("SELECT target_player_id FROM share_relations WHERE player_id=?")) {
+
+            statement.setString(1, playerId);
+
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                sharingPlayers.add(resultSet.getString("target_player_id"));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return sharingPlayers;
     }
 }

@@ -1,6 +1,7 @@
 package fr.arcainc.reinforcelandplugin.gui;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
+import fr.arcainc.reinforcelandplugin.database.SharePermission;
 import fr.arcainc.reinforcelandplugin.utils.CustomColor;
 import fr.arcainc.reinforcelandplugin.utils.ItemStackUtils;
 import org.bukkit.Bukkit;
@@ -13,6 +14,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public class AdvancedTrustGUI extends GUI {
 
@@ -24,11 +26,15 @@ public class AdvancedTrustGUI extends GUI {
 
     @Override
     public void openWithVarString(Player player, String to_trust) {
-        super.open(player);
+        openModifiedPermissions(ReinforceLandPlugin.getInstance().database.hasSharePermission(String.valueOf(player.getUniqueId()), to_trust, SharePermission.SHARE_STORAGE),
+                ReinforceLandPlugin.getInstance().database.hasSharePermission(String.valueOf(player.getUniqueId()), to_trust, SharePermission.SHARE_BEAK_BYPASS),
+                ReinforceLandPlugin.getInstance().database.hasSharePermission(String.valueOf(player.getUniqueId()), to_trust, SharePermission.SHARE_ADD_HEALTH),
+                ReinforceLandPlugin.getInstance().database.hasSharePermission(String.valueOf(player.getUniqueId()), to_trust, SharePermission.SHARE_USE));
         this.to_trust.put(player, to_trust);
+        super.open(player);
     }
 
-    public void openModifiedPermissions(Player player, String to_trust, boolean storage, boolean break_bypass, boolean health, boolean use) {
+    public void openModifiedPermissions(boolean storage, boolean break_bypass, boolean health, boolean use) {
         this.storage = storage;
         this.break_bypass = break_bypass;
         this.health = health;
@@ -131,8 +137,8 @@ public class AdvancedTrustGUI extends GUI {
                 event.setCancelled(true);
                 break;
             case 22:
-                ReinforceLandPlugin.getInstance().database.removeShareRelations(String.valueOf(player.getUniqueId()), String.valueOf(Bukkit.getPlayer(to_trust.get(player)).getUniqueId()));
-                ReinforceLandPlugin.getInstance().database.setShareRelations(String.valueOf(player.getUniqueId()), String.valueOf(Bukkit.getPlayer(to_trust.get(player)).getUniqueId()), storage, break_bypass, health, use);
+                ReinforceLandPlugin.getInstance().database.removeShareRelations(String.valueOf(player.getUniqueId()), to_trust.get(player));
+                ReinforceLandPlugin.getInstance().database.setShareRelations(String.valueOf(player.getUniqueId()), to_trust.get(player), storage, break_bypass, health, use);
                 event.setCancelled(true);
                 close();
                 break;

@@ -2,8 +2,11 @@ package fr.arcainc.reinforcelandplugin.listener;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
 import fr.arcainc.reinforcelandplugin.config.ConfigManager;
+import fr.arcainc.reinforcelandplugin.config.HealthDisplay;
+import fr.arcainc.reinforcelandplugin.config.ModeDisplay;
 import fr.arcainc.reinforcelandplugin.database.SharePermission;
 import fr.arcainc.reinforcelandplugin.utils.ArmorStandUtil;
+import fr.arcainc.reinforcelandplugin.utils.CustomBossBar;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -12,6 +15,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
+import org.bukkit.boss.BarColor;
+import org.bukkit.boss.BarStyle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -100,7 +105,19 @@ public class BlockEvent implements Listener {
                 }
                 if (plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ()) > 1) {
                     int heal = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
-                    ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal - 1))), block, plugin);
+                    if(plugin.database.getPlayerHealthDisplay(String.valueOf(player.getUniqueId())) == HealthDisplay.HOLO) {
+                        ArmorStandUtil.sendArmorStandHologram(event.getPlayer(), ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal - 1))), block, plugin);
+                    } else if (plugin.database.getPlayerHealthDisplay(String.valueOf(player.getUniqueId())) == HealthDisplay.BOSS_BAR) {
+                        if (!plugin.playerBossBars.containsKey(player)) {
+                            // S'il n'en a pas, créez une BossBar personnalisée
+                            CustomBossBar customBossBar = new CustomBossBar();
+                            customBossBar.createBossBar(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal))), BarColor.BLUE, BarStyle.SOLID);
+                            plugin.playerBossBars.put(player, customBossBar);
+                        }else {
+                            CustomBossBar customBossBar = plugin.playerBossBars.get(player);
+                            customBossBar.setTitle(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(heal))));
+                        }
+                    }
                 }
             }
         }
@@ -291,6 +308,8 @@ public class BlockEvent implements Listener {
         event.blockList().removeAll(blocksToRemove);
     }
 
+    int reminder = 0;
+
     /**
      * Starts the task to update player's action bar to view if he's in reinforce mode and display ArmorStand with block health information.
      */
@@ -298,6 +317,7 @@ public class BlockEvent implements Listener {
         updateTask = new BukkitRunnable() {
             @Override
             public void run() {
+                reminder++;
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     if (plugin.isInReinforceMode(player)) {
 
@@ -305,22 +325,92 @@ public class BlockEvent implements Listener {
 
                         if (ConfigManager.getHealthItems().containsKey(heldItem)) {
                             int healthToAdd = ConfigManager.getHealthItems().get(heldItem);
-                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd)))));
-                        } else
-                            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
+
+                            if(plugin.database.getPlayerModeDisplay(String.valueOf(player.getUniqueId())) == ModeDisplay.ACTION_BAR) {
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd)))));
+                            } else if (plugin.database.getPlayerModeDisplay(String.valueOf(player.getUniqueId())) == ModeDisplay.BOSS_BAR) {
+                                if (!plugin.playerBossBarsMode.containsKey(player)) {
+                                    // S'il n'en a pas, créez une BossBar personnalisée
+                                    CustomBossBar customBossBar = new CustomBossBar();
+                                    customBossBar.createBossBar(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd))), BarColor.BLUE, BarStyle.SOLID);
+                                    plugin.playerBossBarsMode.put(player, customBossBar);
+                                }else {
+                                    CustomBossBar customBossBar = plugin.playerBossBarsMode.get(player);
+                                    customBossBar.setTitle(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd))));
+                                }
+                            }else if (plugin.database.getPlayerModeDisplay(String.valueOf(player.getUniqueId())) == ModeDisplay.
+                            CHAT) {
+                                if(reminder == 20*45) {
+                                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes") + " " + plugin.getConfig().getString("messages.in_hand").replaceAll("%health_to_add%", String.valueOf(healthToAdd))));
+                                }
+                            }
+                        } else {
+                            if(plugin.database.getPlayerModeDisplay(String.valueOf(player.getUniqueId())) == ModeDisplay.ACTION_BAR) {
+                                player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes"))));
+                            } else if (plugin.database.getPlayerModeDisplay(String.valueOf(player.getUniqueId())) == ModeDisplay.BOSS_BAR) {
+                                if (!plugin.playerBossBarsMode.containsKey(player)) {
+                                    // S'il n'en a pas, créez une BossBar personnalisée
+                                    CustomBossBar customBossBar = new CustomBossBar();
+                                    customBossBar.createBossBar(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes")), BarColor.BLUE, BarStyle.SOLID);
+                                    plugin.playerBossBarsMode.put(player, customBossBar);
+                                }else {
+                                    CustomBossBar customBossBar = plugin.playerBossBarsMode.get(player);
+                                    customBossBar.setTitle(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes")));
+                                }
+                            }else if (plugin.database.getPlayerModeDisplay(String.valueOf(player.getUniqueId())) == ModeDisplay.
+                                    CHAT) {
+                                if(reminder == 20*45) {
+                                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.in_modes")));
+                                }
+                            }
+                        }
 
                         if (!player.getTargetBlock(null, 5).isEmpty()) {
                             if (player.getTargetBlock(null, 5).isLiquid()) return;
                             Block block = player.getTargetBlock(null, 5);
                             if (plugin.database.isBlockReinforced(block.getX(), block.getY(), block.getZ(), block.getWorld().getName())) {
                                 int currentHealth = plugin.database.getHealthForBlock(block.getX(), block.getY(), block.getZ());
-                                ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth)))), block, plugin);
+                                if(plugin.database.getPlayerHealthDisplay(String.valueOf(player.getUniqueId())) == HealthDisplay.HOLO) {
+                                    ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth)))), block, plugin);
+                                } else if (plugin.database.getPlayerHealthDisplay(String.valueOf(player.getUniqueId())) == HealthDisplay.BOSS_BAR) {
+                                    if (!plugin.playerBossBars.containsKey(player)) {
+                                        // S'il n'en a pas, créez une BossBar personnalisée
+                                        CustomBossBar customBossBar = new CustomBossBar();
+                                        customBossBar.createBossBar(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth))), BarColor.BLUE, BarStyle.SOLID);
+                                        plugin.playerBossBars.put(player, customBossBar);
+                                    }else {
+                                        CustomBossBar customBossBar = plugin.playerBossBars.get(player);
+                                        customBossBar.setTitle(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(currentHealth))));
+                                    }
+                                }
                             } else {
-                                ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1)))), block, plugin);
+                                if(plugin.database.getPlayerHealthDisplay(String.valueOf(player.getUniqueId())) == HealthDisplay.HOLO) {
+                                    ArmorStandUtil.sendArmorStandHologram(player, ChatColor.translateAlternateColorCodes('&', ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1)))), block, plugin);
+                                } else if (plugin.database.getPlayerHealthDisplay(String.valueOf(player.getUniqueId())) == HealthDisplay.BOSS_BAR) {
+                                    if (!plugin.playerBossBars.containsKey(player)) {
+                                        // S'il n'en a pas, créez une BossBar personnalisée
+                                        CustomBossBar customBossBar = new CustomBossBar();
+                                        customBossBar.createBossBar(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1))), BarColor.BLUE, BarStyle.SOLID);
+                                        plugin.playerBossBars.put(player, customBossBar);
+                                    }else {
+                                        CustomBossBar customBossBar = plugin.playerBossBars.get(player);
+                                        customBossBar.setTitle(player, ChatColor.translateAlternateColorCodes('&', plugin.getConfig().getString("messages.block_health").replaceAll("%health%", String.valueOf(1))));
+                                    }
+                                }
                             }
+                        }
+                    }else {
+                        CustomBossBar customBossBar = plugin.playerBossBars.remove(player);
+                        if (customBossBar != null) {
+                            customBossBar.removeBossBar(player);
+                        }
+                        CustomBossBar customBossBarMode = plugin.playerBossBarsMode.remove(player);
+                        if (customBossBarMode != null) {
+                            customBossBarMode.removeBossBar(player);
                         }
                     }
                 }
+                if(reminder > 20*45) reminder = 0;
             }
         }.runTaskTimer(plugin, 0, 20); // Updates every 20 ticks (1 tick = 1/20th of a second)
     }

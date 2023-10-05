@@ -8,6 +8,7 @@ import fr.arcainc.reinforcelandplugin.gui.GuiType;
 import fr.arcainc.reinforcelandplugin.gui.TrustGUI;
 import fr.arcainc.reinforcelandplugin.listener.BlockEvent;
 import fr.arcainc.reinforcelandplugin.utils.ArmorStandUtil;
+import fr.arcainc.reinforcelandplugin.utils.CustomBossBar;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -27,6 +28,9 @@ public final class ReinforceLandPlugin extends JavaPlugin {
     }
 
     public static ReinforceLandPlugin instance;
+
+    public Map<Player, CustomBossBar> playerBossBars = new HashMap<>();
+    public Map<Player, CustomBossBar> playerBossBarsMode = new HashMap<>();
 
     @Override
     public void onEnable() {

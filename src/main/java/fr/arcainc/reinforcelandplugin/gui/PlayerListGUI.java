@@ -47,13 +47,12 @@ public class PlayerListGUI extends GUI {
         } else if (slot >= 11 && slot <= 15) {
             // Player head slot clicked
             ItemStack clickedItem = event.getCurrentItem();
-            if (clickedItem != null) {
+            if (clickedItem.getType() != Material.AIR) {
                 String playerName = ChatColor.stripColor(clickedItem.getItemMeta().getLore().get(0));
                 close();
                 new AdvancedTrustGUI().openWithVarString(player.getPlayer(), playerName);
             }
         }
-
 
         event.setCancelled(true);
     }

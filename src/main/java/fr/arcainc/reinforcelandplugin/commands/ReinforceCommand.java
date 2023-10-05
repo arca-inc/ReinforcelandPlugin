@@ -1,9 +1,11 @@
 package fr.arcainc.reinforcelandplugin.commands;
 
 import fr.arcainc.reinforcelandplugin.ReinforceLandPlugin;
+import fr.arcainc.reinforcelandplugin.gui.ConfigGUI;
 import fr.arcainc.reinforcelandplugin.gui.GuiType;
 import fr.arcainc.reinforcelandplugin.gui.PlayerListGUI;
 import fr.arcainc.reinforcelandplugin.gui.TrustGUI;
+import fr.arcainc.reinforcelandplugin.utils.CustomBossBar;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -20,6 +22,7 @@ public class ReinforceCommand implements CommandExecutor {
     private final ReinforceLandPlugin plugin;
 
     private String prefix;
+
 
     /**
      * Constructor for the ReinforceCommand class.
@@ -89,6 +92,10 @@ public class ReinforceCommand implements CommandExecutor {
 
                 case "help":
                     displayHelp(player);
+                    break;
+
+                case "config":
+                    new ConfigGUI().open(player);
                     break;
 
                 default:
